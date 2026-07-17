@@ -7,6 +7,22 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Login Overlay -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-card">
+            <img src="logo.png" alt="Logo SMP IT" class="login-logo" onerror="this.style.display='none';">
+            <h2>Akses Admin</h2>
+            <p>SMP IT Nurul Muhajirin Batam</p>
+            <form id="loginForm">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <input type="password" id="adminPassword" placeholder="Masukkan Password Admin" required style="width: 100%; padding: 12px; border: 2px solid var(--border-color, #e2e8f0); border-radius: 8px; font-size: 1rem; text-align: center; box-sizing: border-box;">
+                </div>
+                <button type="submit" class="btn-login">Masuk</button>
+                <p id="loginError" class="login-error" style="display: none; color: var(--danger-color, #e74c3c); font-weight: bold; margin-top: 15px;"></p>
+            </form>
+        </div>
+    </div>
+
     <div class="container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
@@ -33,6 +49,9 @@
                 </button>
                 <button class="menu-btn" data-menu="laporan">
                     <span>📊</span> Laporan
+                </button>
+                <button class="menu-btn menu-btn-logout" id="logoutBtn">
+                    <span>🚪</span> Keluar
                 </button>
             </nav>
         </aside>

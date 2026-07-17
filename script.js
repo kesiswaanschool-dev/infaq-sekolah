@@ -9,15 +9,67 @@ const HEADERS = {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
+    const loginOverlay = document.getElementById('loginOverlay');
+    const loginForm = document.getElementById('loginForm');
+    const adminPasswordInput = document.getElementById('adminPassword');
+    const loginError = document.getElementById('loginError');
+
+    // Check if already authenticated in this session
+    if (sessionStorage.getItem('infaq_admin_authenticated') === 'true') {
+        if (loginOverlay) loginOverlay.style.display = 'none';
+        await initApp();
+    } else {
+        if (loginOverlay) {
+            loginOverlay.style.display = 'flex';
+        }
+    }
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = adminPasswordInput.value;
+            if (password === 'Alsada123##') {
+                sessionStorage.setItem('infaq_admin_authenticated', 'true');
+                if (loginOverlay) {
+                    loginOverlay.style.opacity = '0';
+                    setTimeout(() => {
+                        loginOverlay.style.display = 'none';
+                    }, 300);
+                }
+                await initApp();
+            } else {
+                loginError.textContent = 'Password salah! Silakan coba lagi.';
+                loginError.style.display = 'block';
+                adminPasswordInput.value = '';
+                adminPasswordInput.focus();
+            }
+        });
+    }
+
+    // Setup Logout Button
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('Apakah Anda yakin ingin keluar?')) {
+                sessionStorage.removeItem('infaq_admin_authenticated');
+                window.location.reload();
+            }
+        });
+    }
+});
+
+async function initApp() {
     setupMenuListeners();
     setupFormListeners();
     await loadTransactions();
     loadStats();
     
     // Set today's date as default
-    document.getElementById('masukDate').valueAsDate = new Date();
-    document.getElementById('keluarDate').valueAsDate = new Date();
-});
+    const masukDate = document.getElementById('masukDate');
+    const keluarDate = document.getElementById('keluarDate');
+    if (masukDate) masukDate.valueAsDate = new Date();
+    if (keluarDate) keluarDate.valueAsDate = new Date();
+}
 
 // Format currency to IDR
 function formatCurrency(amount) {
