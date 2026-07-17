@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Infaq Sekolah</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>📊 Infaq Sekolah</h2>
+                <p class="school-name">SMP IT Nurul Muhajirin<br>Batam</p>
+            </div>
+            <nav class="menu">
+                <button class="menu-btn active" data-menu="dashboard">
+                    <span>📈</span> Dashboard
+                </button>
+                <button class="menu-btn" data-menu="masuk">
+                    <span>💰</span> Uang Masuk
+                </button>
+                <button class="menu-btn" data-menu="keluar">
+                    <span>💸</span> Uang Keluar
+                </button>
+                <button class="menu-btn" data-menu="saldo">
+                    <span>💵</span> Saldo Akhir
+                </button>
+                <button class="menu-btn" data-menu="riwayat">
+                    <span>📋</span> Riwayat
+                </button>
+                <button class="menu-btn" data-menu="laporan">
+                    <span>📊</span> Laporan
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <section id="dashboard" class="content-view active">
+                <h1>Dashboard Infaq Sekolah</h1>
+                <div class="stats-container">
+                    <div class="stat-card uang-masuk">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <h3>Uang Masuk</h3>
+                            <p class="stat-value" id="totalMasuk">Rp 0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card uang-keluar">
+                        <div class="stat-icon">💸</div>
+                        <div class="stat-info">
+                            <h3>Uang Keluar</h3>
+                            <p class="stat-value" id="totalKeluar">Rp 0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card saldo-akhir">
+                        <div class="stat-icon">💵</div>
+                        <div class="stat-info">
+                            <h3>Saldo Akhir</h3>
+                            <p class="stat-value" id="saldoAkhir">Rp 0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recent-transactions">
+                    <h2>Transaksi Terbaru</h2>
+                    <div id="recentList" class="transaction-list">
+                        <p>Tidak ada transaksi</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Uang Masuk View -->
+            <section id="masuk" class="content-view">
+                <h1>Uang Masuk</h1>
+                <div class="form-container">
+                    <form id="formMasuk" class="transaction-form">
+                        <div class="form-group">
+                            <label for="masukDesc">Deskripsi</label>
+                            <input type="text" id="masukDesc" placeholder="Contoh: Infaq siswa kelas 7" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="masukAmount">Jumlah (Rp)</label>
+                            <input type="number" id="masukAmount" placeholder="0" min="0" step="1000" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="masukDate">Tanggal</label>
+                            <input type="date" id="masukDate" required>
+                        </div>
+                        <button type="submit" class="btn-submit">Tambah Uang Masuk</button>
+                    </form>
+                </div>
+
+                <div class="transactions-list">
+                    <h2>Daftar Uang Masuk</h2>
+                    <div id="masukList" class="transaction-list">
+                        <p>Tidak ada data</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Uang Keluar View -->
+            <section id="keluar" class="content-view">
+                <h1>Uang Keluar</h1>
+                <div class="form-container">
+                    <form id="formKeluar" class="transaction-form">
+                        <div class="form-group">
+                            <label for="keluarDesc">Deskripsi</label>
+                            <input type="text" id="keluarDesc" placeholder="Contoh: Gaji pengajar" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="keluarAmount">Jumlah (Rp)</label>
+                            <input type="number" id="keluarAmount" placeholder="0" min="0" step="1000" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="keluarDate">Tanggal</label>
+                            <input type="date" id="keluarDate" required>
+                        </div>
+                        <button type="submit" class="btn-submit">Tambah Uang Keluar</button>
+                    </form>
+                </div>
+
+                <div class="transactions-list">
+                    <h2>Daftar Uang Keluar</h2>
+                    <div id="keluarList" class="transaction-list">
+                        <p>Tidak ada data</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Saldo Akhir View -->
+            <section id="saldo" class="content-view">
+                <h1>Saldo Akhir</h1>
+                <div class="saldo-summary">
+                    <div class="saldo-box masuk-box">
+                        <h3>Total Pemasukan</h3>
+                        <p class="saldo-value" id="saldoMasuk">Rp 0</p>
+                    </div>
+                    <div class="saldo-box keluar-box">
+                        <h3>Total Pengeluaran</h3>
+                        <p class="saldo-value" id="saldoKeluar">Rp 0</p>
+                    </div>
+                    <div class="saldo-box akhir-box">
+                        <h3>Saldo Akhir</h3>
+                        <p class="saldo-value" id="saldoTotal">Rp 0</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Riwayat View -->
+            <section id="riwayat" class="content-view">
+                <h1>Riwayat Transaksi</h1>
+                <div class="riwayat-filters">
+                    <select id="filterType">
+                        <option value="">Semua Tipe</option>
+                        <option value="masuk">Uang Masuk</option>
+                        <option value="keluar">Uang Keluar</option>
+                    </select>
+                </div>
+                <div id="riwayatList" class="transaction-list">
+                    <p>Tidak ada transaksi</p>
+                </div>
+            </section>
+
+            <!-- Laporan View -->
+            <section id="laporan" class="content-view">
+                <h1>Laporan Keuangan</h1>
+                <div class="laporan-filters">
+                    <select id="reportPeriod">
+                        <option value="daily">Per Hari</option>
+                        <option value="monthly">Per Bulan</option>
+                        <option value="yearly">Per Tahun</option>
+                    </select>
+                </div>
+
+                <div class="laporan-container">
+                    <table class="laporan-table">
+                        <thead>
+                            <tr>
+                                <th>Periode</th>
+                                <th class="amount">Uang Masuk</th>
+                                <th class="amount">Uang Keluar</th>
+                                <th class="amount">Saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="laporanBody">
+                            <tr>
+                                <td colspan="4" style="text-align: center;">Memuat data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="laporan-summary">
+                    <div class="summary-box">
+                        <h3>Total Uang Masuk</h3>
+                        <p class="summary-value" id="laporanTotalMasuk">Rp 0</p>
+                    </div>
+                    <div class="summary-box">
+                        <h3>Total Uang Keluar</h3>
+                        <p class="summary-value" id="laporanTotalKeluar">Rp 0</p>
+                    </div>
+                    <div class="summary-box">
+                        <h3>Saldo Keseluruhan</h3>
+                        <p class="summary-value" id="laporanTotalSaldo">Rp 0</p>
+                    </div>
+                </div>
+
+                <div class="laporan-detail">
+                    <h2>Detail Transaksi</h2>
+                    <div id="laporanDetailBody" class="detail-transaction-list">
+                        <p>Tidak ada data</p>
+                    </div>
+                </div>
+
+                <div class="laporan-actions">
+                    <button class="btn-export" onclick="exportToCSV()">📥 Export CSV</button>
+                    <button class="btn-print" onclick="window.print()">🖨️ Print</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
