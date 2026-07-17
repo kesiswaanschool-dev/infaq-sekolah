@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Infaq Sekolah - SMP IT Nurul Muhajirin Batam</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Specific stylesheet override for print friendliness and public report branding */
+        .public-badge {
+            display: inline-block;
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h2>📊 Infaq Sekolah</h2>
+                <p class="school-name">SMP IT Nurul Muhajirin<br>Batam</p>
+                <span class="public-badge">Mode Publik</span>
+            </div>
+            <nav class="menu">
+                <button class="menu-btn active" data-menu="dashboard">
+                    <span>📈</span> Dashboard
+                </button>
+                <button class="menu-btn" data-menu="riwayat">
+                    <span>📋</span> Riwayat
+                </button>
+                <button class="menu-btn" data-menu="laporan">
+                    <span>📊</span> Laporan
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <section id="dashboard" class="content-view active">
+                <h1>Dashboard Laporan Infaq</h1>
+                <div class="stats-container">
+                    <div class="stat-card uang-masuk">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <h3>Total Uang Masuk</h3>
+                            <p class="stat-value" id="totalMasuk">Rp 0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card uang-keluar">
+                        <div class="stat-icon">💸</div>
+                        <div class="stat-info">
+                            <h3>Total Uang Keluar</h3>
+                            <p class="stat-value" id="totalKeluar">Rp 0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card saldo-akhir">
+                        <div class="stat-icon">💵</div>
+                        <div class="stat-info">
+                            <h3>Saldo Akhir</h3>
+                            <p class="stat-value" id="saldoAkhir">Rp 0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recent-transactions">
+                    <h2>Transaksi Terbaru</h2>
+                    <div id="recentList" class="transaction-list">
+                        <p>Tidak ada transaksi</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Riwayat View -->
+            <section id="riwayat" class="content-view">
+                <h1>Riwayat Transaksi</h1>
+                <div class="riwayat-filters">
+                    <select id="filterType">
+                        <option value="">Semua Tipe</option>
+                        <option value="masuk">Uang Masuk</option>
+                        <option value="keluar">Uang Keluar</option>
+                    </select>
+                </div>
+                <div id="riwayatList" class="transaction-list">
+                    <p>Tidak ada transaksi</p>
+                </div>
+            </section>
+
+            <!-- Laporan View -->
+            <section id="laporan" class="content-view">
+                <h1>Laporan Keuangan</h1>
+                <div class="laporan-filters">
+                    <select id="reportPeriod">
+                        <option value="daily">Per Hari</option>
+                        <option value="monthly">Per Bulan</option>
+                        <option value="yearly">Per Tahun</option>
+                    </select>
+                </div>
+
+                <div class="laporan-container">
+                    <table class="laporan-table">
+                        <thead>
+                            <tr>
+                                <th>Periode</th>
+                                <th class="amount">Uang Masuk</th>
+                                <th class="amount">Uang Keluar</th>
+                                <th class="amount">Saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="laporanBody">
+                            <tr>
+                                <td colspan="4" style="text-align: center;">Memuat data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="laporan-summary">
+                    <div class="summary-box">
+                        <h3>Total Uang Masuk</h3>
+                        <p class="summary-value" id="laporanTotalMasuk">Rp 0</p>
+                    </div>
+                    <div class="summary-box">
+                        <h3>Total Uang Keluar</h3>
+                        <p class="summary-value" id="laporanTotalKeluar">Rp 0</p>
+                    </div>
+                    <div class="summary-box">
+                        <h3>Saldo Keseluruhan</h3>
+                        <p class="summary-value" id="laporanTotalSaldo">Rp 0</p>
+                    </div>
+                </div>
+
+                <div class="laporan-detail">
+                    <h2>Detail Transaksi</h2>
+                    <div id="laporanDetailBody" class="detail-transaction-list">
+                        <p>Tidak ada data</p>
+                    </div>
+                </div>
+
+                <div class="laporan-actions">
+                    <button class="btn-export" onclick="exportToCSV()">📥 Export CSV</button>
+                    <button class="btn-print" onclick="window.print()">🖨️ Print</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="laporan.js"></script>
+</body>
+</html>

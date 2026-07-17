@@ -1,0 +1,486 @@
+const SUPABASE_URL = 'https://htkbvsfmliphtezxtjhj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_Eme1Z04mqhuZ7Fbej5b96g_l16QduF7';
+
+const HEADERS = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json'
+};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', async () => {
+    setupMenuListeners();
+    setupFilters();
+    await loadTransactions();
+    loadStats();
+});
+
+// Format currency to IDR
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+    }).format(amount);
+}
+
+// Setup menu listeners
+function setupMenuListeners() {
+    const menuBtns = document.querySelectorAll('.menu-btn');
+    menuBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const menuName = btn.getAttribute('data-menu');
+            showView(menuName);
+            
+            // Remove active from all buttons
+            menuBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+}
+
+// Show view
+function showView(viewName) {
+    const views = document.querySelectorAll('.content-view');
+    views.forEach(view => view.classList.remove('active'));
+    
+    const activeView = document.getElementById(viewName);
+    if (activeView) {
+        activeView.classList.add('active');
+        
+        // Reload data when switching views
+        if (viewName === 'dashboard') {
+            loadStats();
+            loadRecentTransactions();
+        } else if (viewName === 'riwayat') {
+            loadAllTransactions();
+        } else if (viewName === 'laporan') {
+            loadLaporan();
+        }
+    }
+}
+
+// Setup filter listeners
+function setupFilters() {
+    const filterType = document.getElementById('filterType');
+    if (filterType) {
+        filterType.addEventListener('change', loadAllTransactions);
+    }
+    
+    const reportPeriod = document.getElementById('reportPeriod');
+    if (reportPeriod) {
+        reportPeriod.addEventListener('change', loadLaporan);
+    }
+}
+
+// Load stats
+function loadStats() {
+    try {
+        const transactions = window.allTransactions || [];
+        let totalMasuk = 0;
+        let totalKeluar = 0;
+        
+        transactions.forEach(t => {
+            if (t.type === 'masuk') {
+                totalMasuk += t.amount;
+            } else if (t.type === 'keluar') {
+                totalKeluar += t.amount;
+            }
+        });
+        
+        const saldoAkhir = totalMasuk - totalKeluar;
+        
+        document.getElementById('totalMasuk').textContent = formatCurrency(totalMasuk);
+        document.getElementById('totalKeluar').textContent = formatCurrency(totalKeluar);
+        document.getElementById('saldoAkhir').textContent = formatCurrency(saldoAkhir);
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+// Load all transactions from Supabase
+async function loadTransactions() {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/transactions?select=*&order=date.desc`, {
+            headers: HEADERS
+        });
+        if (!response.ok) throw new Error('Gagal mengambil data dari Supabase');
+        const transactions = await response.json();
+        
+        window.allTransactions = transactions;
+        
+        loadRecentTransactions();
+    } catch (error) {
+        console.error('Error loading transactions:', error);
+    }
+}
+
+// Load recent transactions (for dashboard) - READ ONLY (No Hapus button)
+function loadRecentTransactions() {
+    const transactions = window.allTransactions || [];
+    const recentList = document.getElementById('recentList');
+    const recent = transactions.slice(0, 5);
+    
+    if (recent.length === 0) {
+        recentList.innerHTML = '<p>Tidak ada transaksi</p>';
+        return;
+    }
+    
+    recentList.innerHTML = recent.map(t => `
+        <div class="transaction-item ${t.type}">
+            <div class="transaction-item-info">
+                <div class="transaction-item-desc">${t.description || 'Transaksi'}</div>
+                <div class="transaction-item-date">${new Date(t.date).toLocaleDateString('id-ID')}</div>
+            </div>
+            <div class="transaction-item-amount">${t.type === 'masuk' ? '+' : '-'} ${formatCurrency(t.amount)}</div>
+        </div>
+    `).join('');
+}
+
+// Load all transactions with filter - READ ONLY (No Hapus button)
+function loadAllTransactions() {
+    const transactions = window.allTransactions || [];
+    const riwayatList = document.getElementById('riwayatList');
+    const filterType = document.getElementById('filterType').value;
+    
+    let filtered = transactions;
+    if (filterType) {
+        filtered = transactions.filter(t => t.type === filterType);
+    }
+    
+    if (filtered.length === 0) {
+        riwayatList.innerHTML = '<p>Tidak ada transaksi</p>';
+        return;
+    }
+    
+    riwayatList.innerHTML = filtered.map(t => `
+        <div class="transaction-item ${t.type}">
+            <div class="transaction-item-info">
+                <div class="transaction-item-desc">${t.description || 'Transaksi'}</div>
+                <div class="transaction-item-date">${new Date(t.date).toLocaleDateString('id-ID')}</div>
+            </div>
+            <div class="transaction-item-amount">${t.type === 'masuk' ? '+' : '-'} ${formatCurrency(t.amount)}</div>
+        </div>
+    `).join('');
+}
+
+// Calculate running balance for all transactions in chronological order (earliest to latest)
+function calculateRunningBalances(transactions) {
+    const sorted = [...transactions].sort((a, b) => {
+        if (a.date !== b.date) {
+            return a.date.localeCompare(b.date);
+        }
+        return a.id - b.id;
+    });
+    
+    let running = 0;
+    sorted.forEach(t => {
+        if (t.type === 'masuk') {
+            running += t.amount;
+        } else if (t.type === 'keluar') {
+            running -= t.amount;
+        }
+        t.runningBalance = running;
+    });
+    
+    return sorted;
+}
+
+// Load laporan
+async function loadLaporan() {
+    const period = document.getElementById('reportPeriod').value || 'daily';
+    
+    try {
+        const transactions = window.allTransactions || [];
+        
+        // Enrich transactions with running balance
+        const enrichedTransactions = calculateRunningBalances(transactions);
+        
+        // Group transactions by period
+        const groups = {};
+        enrichedTransactions.forEach(t => {
+            let key;
+            if (period === 'daily') {
+                key = t.date;
+            } else if (period === 'monthly') {
+                key = t.date.substring(0, 7); // YYYY-MM
+            } else if (period === 'yearly') {
+                key = t.date.substring(0, 4); // YYYY
+            }
+            
+            if (!groups[key]) {
+                groups[key] = { masuk: 0, keluar: 0 };
+            }
+            
+            if (t.type === 'masuk') {
+                groups[key].masuk += t.amount;
+            } else if (t.type === 'keluar') {
+                groups[key].keluar += t.amount;
+            }
+        });
+        
+        // Convert groups object to array of report items
+        const report = Object.keys(groups).map(key => {
+            const item = {
+                masuk: groups[key].masuk,
+                keluar: groups[key].keluar,
+                saldo: groups[key].masuk - groups[key].keluar
+            };
+            
+            if (period === 'daily') item.date = key;
+            else if (period === 'monthly') item.month = key;
+            else if (period === 'yearly') item.year = key;
+            
+            return item;
+        });
+        
+        // Sort report groups descending (newest first) for the main table
+        report.sort((a, b) => {
+            const keyA = period === 'daily' ? a.date : (period === 'monthly' ? a.month : a.year);
+            const keyB = period === 'daily' ? b.date : (period === 'monthly' ? b.month : b.year);
+            return keyB.localeCompare(keyA);
+        });
+        
+        displayLaporan(report, period, enrichedTransactions);
+    } catch (error) {
+        console.error('Error loading laporan:', error);
+    }
+}
+
+// Display laporan
+function displayLaporan(report, period, allTransactions) {
+    const laporanBody = document.getElementById('laporanBody');
+    const detailBody = document.getElementById('laporanDetailBody');
+    let totalMasuk = 0;
+    let totalKeluar = 0;
+    
+    if (report.length === 0) {
+        laporanBody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Tidak ada data</td></tr>';
+        detailBody.innerHTML = '<p>Tidak ada data</p>';
+        updateLaporanSummary(0, 0);
+        return;
+    }
+    
+    let periodLabel = '';
+    if (period === 'daily') periodLabel = 'Hari';
+    else if (period === 'monthly') periodLabel = 'Bulan';
+    else if (period === 'yearly') periodLabel = 'Tahun';
+    
+    // Update table header
+    document.querySelector('.laporan-table thead tr').innerHTML = `
+        <th>${periodLabel}</th>
+        <th class="amount">Uang Masuk</th>
+        <th class="amount">Uang Keluar</th>
+        <th class="amount">Saldo</th>
+    `;
+    
+    laporanBody.innerHTML = report.map(item => {
+        const key = period === 'daily' ? item.date : (period === 'monthly' ? item.month : item.year);
+        const displayKey = formatPeriodLabel(key, period);
+        const masuk = item.masuk || 0;
+        const keluar = item.keluar || 0;
+        const saldo = item.saldo || 0;
+        
+        totalMasuk += masuk;
+        totalKeluar += keluar;
+        
+        return `
+            <tr>
+                <td>${displayKey}</td>
+                <td class="amount" style="color: var(--success-color); font-weight: bold;">${formatCurrency(masuk)}</td>
+                <td class="amount" style="color: var(--danger-color); font-weight: bold;">${formatCurrency(keluar)}</td>
+                <td class="amount" style="color: var(--primary-color); font-weight: bold;">${formatCurrency(saldo)}</td>
+            </tr>
+        `;
+    }).join('');
+    
+    // Generate detailed transaction table grouped by period
+    let detailHTML = '';
+    
+    // Sort period groups chronologically ascending (oldest first)
+    const sortedReport = [...report].sort((a, b) => {
+        const keyA = period === 'daily' ? a.date : (period === 'monthly' ? a.month : a.year);
+        const keyB = period === 'daily' ? b.date : (period === 'monthly' ? b.month : b.year);
+        return keyA.localeCompare(keyB);
+    });
+    
+    sortedReport.forEach(item => {
+        const key = period === 'daily' ? item.date : (period === 'monthly' ? item.month : item.year);
+        const displayKey = formatPeriodLabel(key, period);
+        
+        const periodTransactions = allTransactions.filter(trans => {
+            if (period === 'daily') {
+                return trans.date === key;
+            } else if (period === 'monthly') {
+                return trans.date.substring(0, 7) === key;
+            } else if (period === 'yearly') {
+                return trans.date.substring(0, 4) === key;
+            }
+            return false;
+        });
+        
+        if (periodTransactions.length > 0) {
+            detailHTML += `
+                <div class="detail-period-section">
+                    <h3 class="detail-period-title">${displayKey}</h3>
+                    <div style="overflow-x: auto; margin-bottom: 15px;">
+                        <table class="laporan-table">
+                            <thead>
+                                <tr>
+                                    <th>Tgl</th>
+                                    <th>Keterangan</th>
+                                    <th class="amount">Nilai</th>
+                                    <th style="text-align: center;">Jenis Transaksi</th>
+                                    <th class="amount">Saldo Akhir</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${periodTransactions.map(trans => `
+                                    <tr>
+                                        <td>${new Date(trans.date).toLocaleDateString('id-ID')}</td>
+                                        <td>${trans.description || 'Transaksi'}</td>
+                                        <td class="amount" style="color: ${trans.type === 'masuk' ? 'var(--success-color)' : 'var(--danger-color)'}; font-weight: bold;">
+                                            ${trans.type === 'masuk' ? '+' : '-'} ${formatCurrency(trans.amount)}
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <span class="detail-trans-type ${trans.type}">
+                                                ${trans.type === 'masuk' ? 'Masuk' : 'Keluar'}
+                                            </span>
+                                        </td>
+                                        <td class="amount" style="font-weight: bold; color: var(--primary-color);">
+                                            ${formatCurrency(trans.runningBalance)}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+    });
+    
+    if (detailHTML) {
+        detailBody.innerHTML = detailHTML;
+    } else {
+        detailBody.innerHTML = '<p>Tidak ada detail transaksi</p>';
+    }
+    
+    updateLaporanSummary(totalMasuk, totalKeluar);
+    
+    window.currentReport = {
+        data: report,
+        period: period,
+        totalMasuk: totalMasuk,
+        totalKeluar: totalKeluar,
+        transactions: allTransactions
+    };
+}
+
+// Format period label
+function formatPeriodLabel(value, period) {
+    if (period === 'daily') {
+        return new Date(value).toLocaleDateString('id-ID');
+    } else if (period === 'monthly') {
+        const [year, month] = value.split('-');
+        const date = new Date(year, parseInt(month) - 1);
+        return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long' });
+    } else if (period === 'yearly') {
+        return value;
+    }
+}
+
+// Update report summary
+function updateLaporanSummary(totalMasuk, totalKeluar) {
+    const totalSaldo = totalMasuk - totalKeluar;
+    
+    document.getElementById('laporanTotalMasuk').textContent = formatCurrency(totalMasuk);
+    document.getElementById('laporanTotalKeluar').textContent = formatCurrency(totalKeluar);
+    document.getElementById('laporanTotalSaldo').textContent = formatCurrency(totalSaldo);
+}
+
+// Export to CSV
+function exportToCSV() {
+    if (!window.currentReport || !window.currentReport.data) {
+        alert('Tidak ada data untuk diexport');
+        return;
+    }
+    
+    const report = window.currentReport;
+    const period = report.period;
+    let csv = 'Laporan Keuangan Infaq Sekolah\n';
+    csv += `Periode: ${period === 'daily' ? 'Per Hari' : period === 'monthly' ? 'Per Bulan' : 'Per Tahun'}\n`;
+    csv += `Tanggal Export: ${new Date().toLocaleDateString('id-ID')}\n\n`;
+    
+    csv += '=== RINGKASAN AGREGASI ===\n';
+    csv += 'Periode,Uang Masuk,Uang Keluar,Saldo\n';
+    
+    report.data.forEach(item => {
+        const key = period === 'daily' ? item.date : (period === 'monthly' ? item.month : item.year);
+        const displayKey = formatPeriodLabel(key, period);
+        const masuk = item.masuk || 0;
+        const keluar = item.keluar || 0;
+        const saldo = item.saldo || 0;
+        
+        csv += `"${displayKey}",${masuk},${keluar},${saldo}\n`;
+    });
+    
+    csv += '\n';
+    csv += `Total Uang Masuk,${report.totalMasuk}\n`;
+    csv += `Total Uang Keluar,${report.totalKeluar}\n`;
+    csv += `Saldo Keseluruhan,${report.totalMasuk - report.totalKeluar}\n`;
+    
+    csv += '\n\n=== DETAIL TRANSAKSI ===\n';
+    
+    const csvReportGroups = [...report.data].sort((a, b) => {
+        const keyA = period === 'daily' ? a.date : (period === 'monthly' ? a.month : a.year);
+        const keyB = period === 'daily' ? b.date : (period === 'monthly' ? b.month : b.year);
+        return keyA.localeCompare(keyB);
+    });
+    
+    csvReportGroups.forEach(item => {
+        const key = period === 'daily' ? item.date : (period === 'monthly' ? item.month : item.year);
+        const displayKey = formatPeriodLabel(key, period);
+        
+        const periodTransactions = report.transactions.filter(trans => {
+            if (period === 'daily') {
+                return trans.date === key;
+            } else if (period === 'monthly') {
+                return trans.date.substring(0, 7) === key;
+            } else if (period === 'yearly') {
+                return trans.date.substring(0, 4) === key;
+            }
+            return false;
+        });
+        
+        if (periodTransactions.length > 0) {
+            csv += `\nPeriode: ${displayKey}\n`;
+            csv += 'Tgl,Keterangan,Nilai,Jenis Transaksi,Saldo Akhir\n';
+            
+            periodTransactions.forEach(trans => {
+                const tanggal = new Date(trans.date).toLocaleDateString('id-ID');
+                const deskripsi = trans.description || 'Transaksi';
+                const tipe = trans.type === 'masuk' ? 'Masuk' : 'Keluar';
+                const nilai = trans.amount;
+                const saldoAkhir = trans.runningBalance;
+                
+                csv += `"${tanggal}","${deskripsi}",${nilai},"${tipe}",${saldoAkhir}\n`;
+            });
+        }
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    const filename = `Laporan_Infaq_Rinci_${new Date().toISOString().split('T')[0]}.csv`;
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    alert('Laporan berhasil diexport!');
+}
