@@ -2,7 +2,7 @@ const { Pool } = require('pg');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:Alsada123###@db.htkbvsfmliphtezxtjhj.supabase.co:5432/postgres';
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:Alsada123%23%23%23@db.htkbvsfmliphtezxtjhj.supabase.co:5432/postgres';
 const isPostgres = !!DATABASE_URL;
 let db;
 
