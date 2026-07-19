@@ -704,6 +704,10 @@ body {
 }
 
 @media (max-width: 480px) {
+    .container {
+        flex-direction: column;
+    }
+
     .sidebar {
         width: 100%;
         height: auto;
@@ -714,6 +718,22 @@ body {
         flex-direction: row;
         overflow-x: auto;
         padding-bottom: 10px;
+        -webkit-overflow-scrolling: touch;
+        gap: 15px;
+    }
+
+    .menu::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .menu::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+    }
+
+    .menu-btn {
+        flex-shrink: 0;
+        white-space: nowrap;
     }
 
     .menu-btn span {
@@ -752,6 +772,7 @@ body {
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     width: 100%;
     max-width: 400px;
+    margin: 20px;
     text-align: center;
     border: 1px solid rgba(0, 0, 0, 0.05);
     animation: slideUp 0.4s ease;
