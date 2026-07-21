@@ -100,7 +100,7 @@ function initPostgresTable() {
     pool.query(`CREATE TABLE IF NOT EXISTS transactions (
       id SERIAL PRIMARY KEY,
       type TEXT NOT NULL CHECK(type IN ('masuk', 'keluar')),
-      amount REAL NOT NULL,
+      amount NUMERIC NOT NULL,
       description TEXT,
       date TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -127,7 +127,7 @@ function initializeSQLiteDatabase() {
         sqliteDb.run(`CREATE TABLE IF NOT EXISTS transactions (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           type TEXT NOT NULL CHECK(type IN ('masuk', 'keluar')),
-          amount REAL NOT NULL,
+          amount NUMERIC NOT NULL,
           description TEXT,
           date TEXT NOT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP

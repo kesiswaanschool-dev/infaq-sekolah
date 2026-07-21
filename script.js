@@ -122,6 +122,9 @@ function showView(viewName) {
     }
 }
 
+let editingMasukId = null;
+let editingKeluarId = null;
+
 // Setup form listeners
 function setupFormListeners() {
     const formMasuk = document.getElementById('formMasuk');
@@ -129,12 +132,18 @@ function setupFormListeners() {
     
     formMasuk.addEventListener('submit', async (e) => {
         e.preventDefault();
-        await addTransaction(
-            'masuk',
-            document.getElementById('masukAmount').value,
-            document.getElementById('masukDesc').value,
-            document.getElementById('masukDate').value
-        );
+        const amount = document.getElementById('masukAmount').value;
+        const desc = document.getElementById('masukDesc').value;
+        const date = document.getElementById('masukDate').value;
+        
+        if (editingMasukId) {
+            await updateTransaction(editingMasukId, 'masuk', amount, desc, date);
+            editingMasukId = null;
+            document.querySelector('#formMasuk .btn-submit').textContent = 'Tambah Uang Masuk';
+        } else {
+            await addTransaction('masuk', amount, desc, date);
+        }
+        
         formMasuk.reset();
         document.getElementById('masukDate').valueAsDate = new Date();
         await loadTransactions();
@@ -143,12 +152,18 @@ function setupFormListeners() {
     
     formKeluar.addEventListener('submit', async (e) => {
         e.preventDefault();
-        await addTransaction(
-            'keluar',
-            document.getElementById('keluarAmount').value,
-            document.getElementById('keluarDesc').value,
-            document.getElementById('keluarDate').value
-        );
+        const amount = document.getElementById('keluarAmount').value;
+        const desc = document.getElementById('keluarDesc').value;
+        const date = document.getElementById('keluarDate').value;
+        
+        if (editingKeluarId) {
+            await updateTransaction(editingKeluarId, 'keluar', amount, desc, date);
+            editingKeluarId = null;
+            document.querySelector('#formKeluar .btn-submit').textContent = 'Tambah Uang Keluar';
+        } else {
+            await addTransaction('keluar', amount, desc, date);
+        }
+        
         formKeluar.reset();
         document.getElementById('keluarDate').valueAsDate = new Date();
         await loadTransactions();
@@ -195,6 +210,58 @@ async function addTransaction(type, amount, description, date) {
         console.error('Error:', error);
         alert('Error: ' + error.message);
     }
+}
+
+// Update transaction
+async function updateTransaction(id, type, amount, description, date) {
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/transactions?id=eq.${id}`, {
+            method: 'PATCH',
+            headers: {
+                ...HEADERS,
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify({
+                amount: parseFloat(amount),
+                description: description || '',
+                date
+            })
+        });
+        
+        if (response.ok) {
+            alert('Transaksi berhasil diubah!');
+        } else {
+            const err = await response.json();
+            throw new Error(err.message || 'Gagal mengubah transaksi');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error: ' + error.message);
+    }
+}
+
+// Edit transaction
+function editTransaction(id) {
+    const transactions = window.allTransactions || [];
+    const transaction = transactions.find(t => t.id === id);
+    if (!transaction) return;
+
+    if (transaction.type === 'masuk') {
+        editingMasukId = id;
+        showView('masuk');
+        document.getElementById('masukDesc').value = transaction.description;
+        document.getElementById('masukAmount').value = transaction.amount;
+        document.getElementById('masukDate').value = transaction.date;
+        document.querySelector('#formMasuk .btn-submit').textContent = 'Simpan Perubahan';
+    } else if (transaction.type === 'keluar') {
+        editingKeluarId = id;
+        showView('keluar');
+        document.getElementById('keluarDesc').value = transaction.description;
+        document.getElementById('keluarAmount').value = transaction.amount;
+        document.getElementById('keluarDate').value = transaction.date;
+        document.querySelector('#formKeluar .btn-submit').textContent = 'Simpan Perubahan';
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // Delete transaction
@@ -290,6 +357,7 @@ function loadRecentTransactions() {
             </div>
             <div class="transaction-item-amount">${t.type === 'masuk' ? '+' : '-'} ${formatCurrency(t.amount)}</div>
             <div class="transaction-item-actions">
+                <button class="btn-edit" onclick="editTransaction(${t.id})">Edit</button>
                 <button class="btn-delete" onclick="deleteTransaction(${t.id})">Hapus</button>
             </div>
         </div>
@@ -315,6 +383,7 @@ function loadMasukTransactions() {
             </div>
             <div class="transaction-item-amount">+ ${formatCurrency(t.amount)}</div>
             <div class="transaction-item-actions">
+                <button class="btn-edit" onclick="editTransaction(${t.id})">Edit</button>
                 <button class="btn-delete" onclick="deleteTransaction(${t.id})">Hapus</button>
             </div>
         </div>
@@ -340,6 +409,7 @@ function loadKeluarTransactions() {
             </div>
             <div class="transaction-item-amount">- ${formatCurrency(t.amount)}</div>
             <div class="transaction-item-actions">
+                <button class="btn-edit" onclick="editTransaction(${t.id})">Edit</button>
                 <button class="btn-delete" onclick="deleteTransaction(${t.id})">Hapus</button>
             </div>
         </div>
@@ -375,6 +445,7 @@ function loadAllTransactions() {
             </div>
             <div class="transaction-item-amount">${t.type === 'masuk' ? '+' : '-'} ${formatCurrency(t.amount)}</div>
             <div class="transaction-item-actions">
+                <button class="btn-edit" onclick="editTransaction(${t.id})">Edit</button>
                 <button class="btn-delete" onclick="deleteTransaction(${t.id})">Hapus</button>
             </div>
         </div>
