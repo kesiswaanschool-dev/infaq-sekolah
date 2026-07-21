@@ -444,7 +444,6 @@ function loadAllTransactions() {
             </div>
             <div class="transaction-item-amount">${t.type === 'masuk' ? '+' : '-'} ${formatCurrency(t.amount)}</div>
             <div class="transaction-item-actions">
-                <button class="btn-edit" onclick="editTransaction(${t.id})">Edit</button>
                 <button class="btn-delete" onclick="deleteTransaction(${t.id})">Hapus</button>
             </div>
         </div>
