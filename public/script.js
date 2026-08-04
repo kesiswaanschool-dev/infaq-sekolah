@@ -1,12 +1,18 @@
 const SUPABASE_URL = 'https://htkbvsfmliphtezxtjhj.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Eme1Z04mqhuZ7Fbej5b96g_l16QduF7';
-const API_BASE_URL = 'https://infaq-sekolah.vercel.app';
 
 const HEADERS = {
     'apikey': SUPABASE_KEY,
     'Authorization': `Bearer ${SUPABASE_KEY}`,
     'Content-Type': 'application/json'
 };
+
+// Gunakan token Supabase Auth setelah admin login (untuk RLS)
+function getAuthHeaders(extra) {
+    const token = sessionStorage.getItem('infaq_admin_token');
+    const headers = token ? { ...HEADERS, 'Authorization': `Bearer ${token}` } : { ...HEADERS };
+    return extra ? { ...headers, ...extra } : headers;
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
@@ -28,18 +34,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const email = document.getElementById('adminEmail').value.trim();
             const password = adminPasswordInput.value;
             loginError.style.display = 'none';
 
             try {
-                const response = await fetch(`${API_BASE_URL}/api/auth`, {
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password })
+                    headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
                 });
 
                 if (response.ok) {
+                    const data = await response.json();
                     sessionStorage.setItem('infaq_admin_authenticated', 'true');
+                    sessionStorage.setItem('infaq_admin_token', data.access_token);
                     if (loginOverlay) {
                         loginOverlay.style.opacity = '0';
                         setTimeout(() => {
@@ -48,13 +57,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     await initApp();
                 } else {
-                    loginError.textContent = 'Password salah! Silakan coba lagi.';
+                    let msg = 'Email atau password salah!';
+                    try {
+                        const err = await response.json();
+                        if (err && err.error_description) msg = err.error_description;
+                    } catch (_) { /* abaikan */ }
+                    loginError.textContent = msg;
                     loginError.style.display = 'block';
                     adminPasswordInput.value = '';
                     adminPasswordInput.focus();
                 }
             } catch (error) {
-                loginError.textContent = 'Server tidak dapat dijangkau. Periksa koneksi internet.';
+                loginError.textContent = 'Tidak dapat terhubung ke server login. Periksa koneksi internet.';
                 loginError.style.display = 'block';
                 adminPasswordInput.value = '';
             }
@@ -67,6 +81,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         logoutBtn.addEventListener('click', () => {
             if (confirm('Apakah Anda yakin ingin keluar?')) {
                 sessionStorage.removeItem('infaq_admin_authenticated');
+                sessionStorage.removeItem('infaq_admin_token');
                 window.location.reload();
             }
         });
@@ -188,10 +203,7 @@ async function addTransaction(type, amount, description, date) {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/transactions`, {
             method: 'POST',
-            headers: {
-                ...HEADERS,
-                'Prefer': 'return=representation'
-            },
+            headers: getAuthHeaders({ 'Prefer': 'return=representation' }),
             body: JSON.stringify({
                 type,
                 amount: parseFloat(amount),
@@ -221,7 +233,7 @@ async function deleteTransaction(id) {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/transactions?id=eq.${id}`, {
             method: 'DELETE',
-            headers: HEADERS
+            headers: getAuthHeaders()
         });
         
         if (response.ok) {
@@ -271,7 +283,7 @@ function loadStats() {
 async function loadTransactions() {
     try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/transactions?select=*&order=date.desc`, {
-            headers: HEADERS
+            headers: getAuthHeaders()
         });
         if (!response.ok) throw new Error('Gagal mengambil data dari Supabase');
         const transactions = await response.json();

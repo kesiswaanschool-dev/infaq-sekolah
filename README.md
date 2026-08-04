@@ -40,27 +40,33 @@ npm start
 
 Aplikasi akan berjalan di `http://localhost:3000`
 
-## Konfigurasi Environment Variable
+## Konfigurasi
 
-Salin `.env.example` menjadi `.env` dan isi nilainya:
+Salin `.env.example` menjadi `.env` dan isi nilainya (untuk pengembangan lokal):
 
 ```bash
 DATABASE_URL=postgresql://postgres:PASSWORD_ANDA@db.PROYEK-ANDA.supabase.co:5432/postgres
-ADMIN_PASSWORD=PASSWORD_RAHASIA_ANDa
 ```
 
 - `DATABASE_URL` - Koneksi PostgreSQL (Supabase). Isi dari Dashboard Supabase → Project Settings → Database → Connection string. Jika kosong, aplikasi otomatis memakai SQLite lokal.
-- `ADMIN_PASSWORD` - Password admin panel. Diperiksa di server via `POST /api/auth`, **tidak boleh** disimpan di kode frontend.
+- `ADMIN_PASSWORD` (opsional) - Digunakan backend `POST /api/auth` jika aplikasi dipakai lewat server.
 
 JANGAN pernah meng-commit file `.env` ke git (sudah ada di `.gitignore`).
 
-### Deploy ke Vercel
-Set environment variable berikut di Vercel Dashboard → Project → Settings → Environment Variables:
-- `DATABASE_URL`
-- `ADMIN_PASSWORD`
+### Login Admin (Supabase Auth)
 
-### Deploy ke GitHub Pages
-Halaman statis (GitHub Pages) membaca data langsung dari Supabase menggunakan publishable key. Login admin akan memanggil backend Vercel (`https://infaq-sekolah.vercel.app/api/auth`), jadi pastikan `ADMIN_PASSWORD` sudah di-set di Vercel.
+Login admin memakai **Supabase Auth**, bukan password hardcoded di kode:
+
+1. Buka Dashboard Supabase → **Authentication → Users → Add user**
+2. Buat user admin dengan **email + password** (mis. `admin@nurulmuhajirin.sch.id` dengan password kuat)
+3. Halaman login admin meminta email & password tersebut
+
+Setiap operasi tulis (tambah/ubah/hapus transaksi) memakai token Supabase Auth sehingga aman jika RLS diaktifkan.
+
+### Deploy
+
+- **GitHub Pages / Vercel statis**: halaman membaca data langsung dari Supabase menggunakan publishable key. Tidak perlu env var khusus — cukup pastikan proyek Supabase aktif dan user admin Auth sudah dibuat.
+- **Backend (opsional)**: jika memakai `server.js`, set env var `DATABASE_URL` di platform hosting.
 
 ## Penggunaan
 
