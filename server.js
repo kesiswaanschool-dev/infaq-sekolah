@@ -15,6 +15,23 @@ app.use(express.static('public'));
 
 // API Routes
 
+// Verifikasi password admin
+app.post('/api/auth', (req, res) => {
+  const { password } = req.body || {};
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminPassword) {
+    res.status(500).json({ error: 'ADMIN_PASSWORD belum dikonfigurasi di server' });
+    return;
+  }
+
+  if (password === adminPassword) {
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ error: 'Password salah' });
+  }
+});
+
 // Get semua transaksi
 app.get('/api/transactions', (req, res) => {
   db.all('SELECT * FROM transactions ORDER BY date DESC', [], (err, rows) => {

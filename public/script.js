@@ -1,5 +1,6 @@
 const SUPABASE_URL = 'https://htkbvsfmliphtezxtjhj.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Eme1Z04mqhuZ7Fbej5b96g_l16QduF7';
+const API_BASE_URL = 'https://infaq-sekolah.vercel.app';
 
 const HEADERS = {
     'apikey': SUPABASE_KEY,
@@ -28,20 +29,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const password = adminPasswordInput.value;
-            if (password === 'Alsada123##') {
-                sessionStorage.setItem('infaq_admin_authenticated', 'true');
-                if (loginOverlay) {
-                    loginOverlay.style.opacity = '0';
-                    setTimeout(() => {
-                        loginOverlay.style.display = 'none';
-                    }, 300);
+            loginError.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                if (response.ok) {
+                    sessionStorage.setItem('infaq_admin_authenticated', 'true');
+                    if (loginOverlay) {
+                        loginOverlay.style.opacity = '0';
+                        setTimeout(() => {
+                            loginOverlay.style.display = 'none';
+                        }, 300);
+                    }
+                    await initApp();
+                } else {
+                    loginError.textContent = 'Password salah! Silakan coba lagi.';
+                    loginError.style.display = 'block';
+                    adminPasswordInput.value = '';
+                    adminPasswordInput.focus();
                 }
-                await initApp();
-            } else {
-                loginError.textContent = 'Password salah! Silakan coba lagi.';
+            } catch (error) {
+                loginError.textContent = 'Server tidak dapat dijangkau. Periksa koneksi internet.';
                 loginError.style.display = 'block';
                 adminPasswordInput.value = '';
-                adminPasswordInput.focus();
             }
         });
     }

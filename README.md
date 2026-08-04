@@ -40,6 +40,28 @@ npm start
 
 Aplikasi akan berjalan di `http://localhost:3000`
 
+## Konfigurasi Environment Variable
+
+Salin `.env.example` menjadi `.env` dan isi nilainya:
+
+```bash
+DATABASE_URL=postgresql://postgres:PASSWORD_ANDA@db.PROYEK-ANDA.supabase.co:5432/postgres
+ADMIN_PASSWORD=PASSWORD_RAHASIA_ANDa
+```
+
+- `DATABASE_URL` - Koneksi PostgreSQL (Supabase). Isi dari Dashboard Supabase → Project Settings → Database → Connection string. Jika kosong, aplikasi otomatis memakai SQLite lokal.
+- `ADMIN_PASSWORD` - Password admin panel. Diperiksa di server via `POST /api/auth`, **tidak boleh** disimpan di kode frontend.
+
+JANGAN pernah meng-commit file `.env` ke git (sudah ada di `.gitignore`).
+
+### Deploy ke Vercel
+Set environment variable berikut di Vercel Dashboard → Project → Settings → Environment Variables:
+- `DATABASE_URL`
+- `ADMIN_PASSWORD`
+
+### Deploy ke GitHub Pages
+Halaman statis (GitHub Pages) membaca data langsung dari Supabase menggunakan publishable key. Login admin akan memanggil backend Vercel (`https://infaq-sekolah.vercel.app/api/auth`), jadi pastikan `ADMIN_PASSWORD` sudah di-set di Vercel.
+
 ## Penggunaan
 
 ### Menu Utama
