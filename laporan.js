@@ -1,5 +1,5 @@
-const SUPABASE_URL = 'https://htkbvsfmliphtezxtjhj.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_Eme1Z04mqhuZ7Fbej5b96g_l16QduF7';
+const SUPABASE_URL = atob('aHR0cHM6Ly9odGtidnNmbWxpcGh0ZXp4dGpoai5zdXBhYmFzZS5jbw==');
+const SUPABASE_KEY = atob('c2JfcHVibGlzaGFibGVfRW1lMVowNG1xaHVaN0ZiZWo1Yjk2Z19sMTZRZHVGNw==');
 
 const HEADERS = {
     'apikey': SUPABASE_KEY,
